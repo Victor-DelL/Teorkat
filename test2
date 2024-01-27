@@ -1,0 +1,68 @@
+class Lambda:
+    def __init__(self, var=None, arg=None, body=None, left=None, right=None):
+        self.var = var
+        self.arg = arg
+        self.body = body
+        self.left = left
+        self.right = right
+
+    def __repr__(self):
+        if self.var:
+            return f"Lambda(var='{self.var}')"
+        elif self.arg and self.body:
+            return f"Lambda(arg='{self.arg}', body={self.body})"
+        elif self.left and self.right:
+            return f"Lambda(left={self.left}, right={self.right})"
+        return "Empty Lambda"
+
+
+def alpha(lam, new_var):
+    # Эта функция и ее содержимое должны быть детально реализованы...
+    pass
+
+
+def beta(lam):
+    # Эта функция и ее содержимое должны быть детально реализованы...
+    pass
+
+
+def lambda_type(lam):
+    if lam.var is not None:
+        return "var"
+    elif lam.arg is not None:
+        return "assoc"
+    elif lam.left is not None and lam.right is not None:
+        return "app"
+    else:
+        raise ValueError("Invalid lambda expression type")
+
+
+def parse(input_str):
+    # Эта функция должна быть детально разработана...
+    pass
+
+
+# Простой интерактивный интерфейс
+while True:
+    user_input = input("Введите лямбда-выражение (или 'exit' для выхода): ")
+    if user_input.lower() == 'exit':
+        break
+    try:
+        parsed_expression = parse(user_input)
+        print("Результат парсинга:", parsed_expression)
+
+        expression_type = lambda_type(parsed_expression)
+        print("Тип выражения:", expression_type)
+
+        # Альфа-редукция (предложите пользователю новое имя для переменной)
+        if expression_type == "assoc":
+            new_var_name = input("Введите новое имя переменной для α-редукции: ")
+            alpha_converted = alpha(parsed_expression, new_var_name)
+            print("Результат α-редукции:", alpha_converted)
+
+        # Бета-редукция (автоматически)
+        beta_reduced = beta(parsed_expression)
+        print("Результат β-редукции:", beta_reduced)
+
+    except Exception as e:
+        print(f"Ошибка при обработке лямбда-выражения: {e}")
