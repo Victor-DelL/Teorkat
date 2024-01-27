@@ -1,0 +1,93 @@
+class Lambda:
+    def __init__(self, var=None, arg=None, body=None, left=None, right=None):
+        self.var = var
+        self.arg = arg
+        self.body = body
+        self.left = left
+        self.right = right
+
+def parse(input_str):
+    # Простой рекурсивный парсер для примера
+    def _parse(iterable):
+        char = next(iterable, None)
+        if char is None: return None
+        if char == '\\':
+            # Обнаружена абстракция (лямбда)
+            arg = next(iterable)  # Считываем аргумент лямбды
+            if next(iterable) != '.': raise SyntaxError("Dot expected after lambda variable")
+            # Парсим тело лямбды
+            body = _parse(iterable)
+            return Lambda(arg=arg, body=body)
+        elif char == '(':
+            # Обнаружено применение (скобки)
+            left = _parse(iterable)
+            right = _parse(iterable)
+            if next(iterable) != ')': raise SyntaxError("Closing parenthesis expected")
+            return Lambda(left=left, right=right)
+        elif char.isalpha() and char.islower():
+            # Обнаружена переменная
+            return Lambda(var=char)
+        elif char.isspace():
+            # Игнорируем пробелы
+            return _parse(iterable)
+
+    return _parse(iter(input_str))
+
+
+def lambda_type(lam):
+    if lam.var is not None:
+        return "var"
+    elif lam.arg is not None:
+        return "assoc"
+    elif lam.left is not None and lam.right is not None:
+        return "app"
+    else:
+        raise ValueError("Invalid lambda expression type")
+
+def alpha(lam, new_var):
+    if lam.var is not None:
+        if lam.var == lam.arg:
+            return Lambda(var=new_var)
+        else:
+            return lam
+    elif lam.arg is not None:
+        lam.arg = new_var
+        lam.body = alpha(lam.body, new_var)
+        return lam
+    elif lam.left is not None and lam.right is not None:
+        lam.left = alpha(lam.left, new_var)
+        lam.right = alpha(lam.right, new_var)
+        return lam
+    else:
+        raise ValueError("Invalid lambda expression for alpha conversion")
+
+def beta(lam):
+    if lam.left is not None and lam.right is not None and lambda_type(lam.left) == "assoc":
+        # Простая бета-редукция: заменяем аргумент в теле лямбды на заданный терм
+        return substitute(lam.left.body, lam.left.arg, lam.right)
+    elif lam.left is not None and lam.right is not None:
+        lam.left = beta(lam.left)
+        lam.right = beta(lam.right)
+        return lam
+    elif lam.var is not None or lam.arg is not None:
+        return lam
+    else:
+        raise ValueError("Invalid lambda expression for beta reduction")
+
+def substitute(body, arg, value):
+    # Эта функция заменяет все вхождения переменной, связанной с `arg`, на `value`
+    if body.var is not None:
+        if body.var == arg:
+            return value
+        else:
+            return body
+    elif body.arg is not None:
+        if body.arg != arg:
+            body.body = substitute(body.body, arg, value)
+        return body
+    elif body.left is not None and body.right is not None:
+        body.left = substitute(body.left, arg, value)
+        body.right = substitute(body.right, arg, value)
+        return body
+    else:
+        raise ValueError("Invalid lambda expression for substitution")
